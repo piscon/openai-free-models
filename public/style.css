@@ -130,3 +130,13 @@ button{font:inherit;cursor:pointer}
   .guide{padding:6px 16px 14px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* tier selector + self-check */
+.tier-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 6px 0 14px; }
+.tier-label { font-weight: 700; font-size: 14px; }
+.tier-note { color: var(--ink-2); font-size: 13px; }
+.selfcheck { margin: 0 0 18px; font-size: 13.5px; color: var(--ink-2); background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+.selfcheck strong { color: var(--ink); }
+.selfcheck a { color: var(--accent); }
+.quota-card.is-zero .big { color: var(--ink-2); }
+.quota-card.is-zero .sub { color: var(--warn); font-weight: 600; }

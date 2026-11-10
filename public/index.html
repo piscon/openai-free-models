@@ -32,7 +32,13 @@
 <main class="wrap">
   <!-- ============ 速查表 ============ -->
   <section id="view-lookup">
+    <div class="tier-bar">
+      <span class="tier-label">我的组织层级</span>
+      <div class="chips" id="tierChips" role="group" aria-label="选择你的组织层级"><!-- JS 渲染 --></div>
+      <span class="tier-note" id="tierNote"></span>
+    </div>
     <div class="quota-grid" id="quotaGrid"><!-- JS 渲染 --></div>
+    <p class="selfcheck">不知道自己在哪一层？登录 <a href="https://platform.openai.com/" target="_blank" rel="noopener">platform.openai.com</a> → 设置 → <strong>Organization → Limits</strong>，页面上的 <strong>Usage Tiers</strong> 区会写明当前层级，也能在那里升级。层级是按<strong>组织</strong>算的：累计购买额度达标后自动升层。</p>
 
     <div class="meta-line" id="metaLine">正在加载数据…</div>
 
@@ -68,11 +74,23 @@
 
       <h2>我有没有资格</h2>
       <ul class="check">
-        <li>组织已到达 <strong>Build 层级</strong>（累计购买过至少 $5 额度）；Launch / Grow 层级额度更高</li>
+        <li>组织层级在 <strong>Build / Launch / Grow</strong> 之中（按累计购买额度 $5 / $100 / $500 自动升层）；<strong>Free 层级不在计划内</strong>，一分免费额度都没有。查自己在哪一层：platform.openai.com → 设置 → Organization → Limits → Usage Tiers</li>
         <li>你是组织的 <strong>Owner</strong>（只有 Owner 能看到并切换共享设置）</li>
         <li>打开数据共享设置页能看到资格提示（如 “You’re eligible for free daily usage”）即代表有资格；看不到就是暂未开放</li>
         <li>账户里要有<strong>正余额</strong>，否则免费额度用不了</li>
       </ul>
+
+      <h2>四个层级对照表</h2>
+      <table class="mig">
+        <thead><tr><th>层级</th><th>怎么到达</th><th>月用量上限</th><th>旗舰池 / 天</th><th>小型池 / 天</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Free</strong></td><td>所在地区受支持即可</td><td>$100</td><td colspan="2">不在计划内（0）</td></tr>
+          <tr><td><strong>Build</strong></td><td>累计购买满 $5</td><td>$500</td><td>25 万</td><td>250 万</td></tr>
+          <tr><td><strong>Launch</strong></td><td>累计购买满 $100</td><td>$5,000</td><td>100 万</td><td>1,000 万</td></tr>
+          <tr><td><strong>Grow</strong></td><td>累计购买满 $500</td><td>$200,000</td><td>100 万</td><td>1,000 万</td></tr>
+        </tbody>
+      </table>
+      <p>Launch 与 Grow 的免费额度相同，差别在月用量上限和速率限制。层级按<strong>组织</strong>计算、达标自动升层；查自己在哪一层：platform.openai.com → 设置 → Organization → Limits 的 <strong>Usage Tiers</strong> 区。</p>
 
       <h2>开启步骤</h2>
       <ol class="steps">
@@ -85,7 +103,7 @@
 
       <h2>额度规则与坑</h2>
       <ul>
-        <li><strong>两个池子，各一份。</strong>旗舰池每天 100 万 token（Build 25 万），小型池每天 1,000 万 token（Build 250 万），池内所有模型共享这一份。</li>
+        <li><strong>两个池子，各一份，按层级给量。</strong>旗舰池：Build 每天 25 万 token，Launch / Grow 每天 100 万；小型池：Build 每天 250 万，Launch / Grow 每天 1,000 万；Free 为 0。池内所有模型共享这一份。速查页顶部选好你的层级，数字就是你那份。</li>
         <li><strong>越线整单收费。</strong>系统按当日累计判断：某次请求会让总量超过额度时，这整条请求按原价计费，不是只有超出的部分收费。</li>
         <li><strong>每天 UTC 00:00 重置</strong>（北京 08:00 / 东京 09:00），不累计、不结转。</li>
         <li><strong>不计入的部分：</strong>微调模型、微调训练、Evals 评测、工具调用（如联网搜索）都不走免费额度。</li>
@@ -111,7 +129,7 @@
       <h2>常见问题</h2>
       <dl class="faq">
         <dt>这是真免费吗？</dt>
-        <dd>额度内是真免费，但门槛是先到 Build 层级（买过 $5 额度）且保持正余额；交换条件是共享调用数据。</dd>
+        <dd>额度内是真免费，但门槛是先到 Build 层级（累计购买满 $5）且保持正余额；Free 层级不在计划内。交换条件是共享调用数据。</dd>
         <dt>ChatGPT 的 Plus / Pro 订阅包含 API 免费额度吗？</dt>
         <dd>不包含。订阅和 API 是两套账，这个计划只针对 API 组织。</dd>
         <dt>为什么名单里有已经关停的模型？</dt>

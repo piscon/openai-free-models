@@ -8,7 +8,7 @@ OpenAI **数据共享计划**的每日免费 token 名单速查 + 使用指南�
 
 ## 页面长什么样
 
-- **速查表**：两个共享额度池的大数字（旗舰池 100 万/天、小型池 1,000 万/天，含 Build 层级数字）、距 UTC 00:00 重置的实时倒计时
+- **速查表**：顶部先选你的**组织层级**（Free / Build / Launch / Grow 四档），两个共享额度池的大数字随层级切换（Build 旗舰池 25 万/天 · 小型池 250 万/天；Launch / Grow 100 万 · 1,000 万；Free 不在计划内显示 0），并附「去哪查自己在哪一层」的官方路径；距 UTC 00:00 重置的实时倒计时
 - **5 个任务分组**：通用主力 / 深度推理 / 编程专用 / 视觉与长文 / 轻量高速，共 34 个模型，每个模型一键复制、每组整组复制、支持搜索
 - **状态标记**：最新代模型挂「新锐」；已宣布关停的挂「落幕」并显示关停日期、剩余天数和官方接班人；已关停的单独标记
 - **使用指南**：资格自查、开启步骤、额度规则与坑（同池共享、超额整单计费、不计入的部分）、按任务选模型、落幕迁移表、FAQ
@@ -113,7 +113,8 @@ npm run deploy    # 手动部署（需要你自己的 Cloudflare 账号与 KV id
 
 ## 数据来源
 
-- 免费名单与额度：[OpenAI 帮助文章 · Sharing feedback, evaluation and fine-tuning data…](https://help.openai.com/en/articles/10306912-sharing-feedback-evaluation-and-fine-tuning-data-and-api-inputs-and-outputs-with-openai)（种子核实于 2026-11-10）
+- 免费名单与各层级额度：[OpenAI 帮助文章 · Sharing feedback, evaluation and fine-tuning data…](https://help.openai.com/en/articles/10306912-sharing-feedback-evaluation-and-fine-tuning-data-and-api-inputs-and-outputs-with-openai)（种子核实于 2026-11-10）
+- 层级定义（Free / Build / Launch / Grow 的门槛与月用量上限）：[OpenAI 开发者文档 · Rate limits（Usage tiers）](https://developers.openai.com/api/docs/guides/rate-limits)
 - 关停日期与接班人：[OpenAI 官方 Deprecations 页](https://developers.openai.com/api/docs/deprecations)
 
 ## License

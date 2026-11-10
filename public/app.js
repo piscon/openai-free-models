@@ -4,7 +4,7 @@
    前端没有任何触发官方抓取的能力，抓取只发生在 Worker 的定时任务里。 */
 
 const $ = (s) => document.querySelector(s);
-const state = { data: null, filter: 'all', query: '' };
+const state = { data: null, filter: 'all', query: '', tier: localStorage.getItem('ofm-tier') || 'build' };
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -64,13 +64,47 @@ async function copyText(text, btn) {
 }
 
 /* ---------- render: quota ---------- */
+// Compat: data served from an older deployment's KV may still be v1
+// (pools carried quotaBuild/quotaLaunchGrow, no tiers). Synthesize tiers.
+function tiersOf(data) {
+  if (Array.isArray(data.tiers) && data.tiers.length) return data.tiers;
+  const lg = Object.fromEntries((data.pools || []).map((p) => [p.key, p.quotaLaunchGrow]));
+  const bd = Object.fromEntries((data.pools || []).map((p) => [p.key, p.quotaBuild]));
+  return [
+    { key: 'free', name: 'Free', qualification: '所在地区受支持即可，无需付费', monthlyLimit: '$100 / 月', quotas: { large: 0, small: 0 }, eligible: false },
+    { key: 'build', name: 'Build', qualification: '累计购买额度满 $5', monthlyLimit: '$500 / 月', quotas: bd, eligible: true },
+    { key: 'launch', name: 'Launch', qualification: '累计购买额度满 $100', monthlyLimit: '$5,000 / 月', quotas: lg, eligible: true },
+    { key: 'grow', name: 'Grow', qualification: '累计购买额度满 $500', monthlyLimit: '$200,000 / 月', quotas: lg, eligible: true },
+  ];
+}
+
 function renderQuota(data) {
-  const cards = data.pools.map((p) => `
-    <div class="quota-card">
+  const tiers = tiersOf(data);
+  if (!tiers.some((t) => t.key === state.tier)) state.tier = 'build';
+  const tier = tiers.find((t) => t.key === state.tier);
+
+  $('#tierChips').innerHTML = tiers.map((t) =>
+    `<button class="chip${t.key === state.tier ? ' is-active' : ''}" data-tier="${esc(t.key)}" type="button">${esc(t.name)}</button>`).join('');
+  $$('#tierChips .chip').forEach((c) => c.addEventListener('click', () => {
+    state.tier = c.dataset.tier;
+    localStorage.setItem('ofm-tier', state.tier);
+    renderQuota(state.data);
+  }));
+  $('#tierNote').textContent = tier.eligible
+    ? `${tier.name}：${tier.qualification} · 月用量上限 ${tier.monthlyLimit}`
+    : `${tier.name}：${tier.qualification} · 月用量上限 ${tier.monthlyLimit} · 不在此计划内`;
+
+  const cards = data.pools.map((p) => {
+    const q = tier.quotas[p.key] ?? 0;
+    return `
+    <div class="quota-card${tier.eligible ? '' : ' is-zero'}">
       <div class="pool">${esc(p.label)} · 每日免费额度（同池共享）</div>
-      <div class="big">${fmt(p.quotaLaunchGrow)} <small>tokens / 天 · Launch / Grow</small></div>
-      <div class="sub">Build 层级 ${fmt(p.quotaBuild)} / 天</div>
-    </div>`).join('');
+      <div class="big">${fmt(q)} <small>tokens / 天 · ${esc(tier.name)} 层级</small></div>
+      <div class="sub">${tier.eligible
+        ? '同池内所有模型共用这一份额度'
+        : '⚠ Free 层级拿不到免费额度：先累计购买满 $5 升到 Build 才能参加'}</div>
+    </div>`;
+  }).join('');
   $('#quotaGrid').innerHTML = cards + `
     <div class="reset-chip" style="grid-column:1/-1">
       ⏳ 距下次额度重置（UTC 00:00）还有 <span id="resetCd">--:--:--</span>
