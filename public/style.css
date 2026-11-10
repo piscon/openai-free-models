@@ -1,15 +1,19 @@
+/* OpenAI 官方设计语言：纯黑白中性灰。白底、近黑文字 (#0d0d0d)、
+   次级灰字 (#6e6e80)、发丝线边框，黑色主按钮/徽章；
+   彩色只保留警告语义的琥珀与红，不用绿色染色。 */
 :root{
-  --bg:#f6f7f5; --card:#ffffff; --ink:#17211c; --ink-2:#5b6a62; --line:#e2e8e3;
-  --brand:#10a37f; --brand-ink:#0b7a5f; --brand-soft:#e5f5ef;
+  --bg:#f7f7f7; --card:#ffffff; --ink:#0d0d0d; --ink-2:#6e6e80; --line:#e5e5e5;
+  --brand:#0d0d0d; --brand-ink:#0d0d0d; --brand-soft:#ececf1;
   --amber-bg:#fdf3e0; --amber-ink:#96660a; --red-bg:#fdeaea; --red-ink:#a32727;
-  --grey-bg:#ecefec; --grey-ink:#64706a; --chip:#eef1ee;
-  --shadow:0 1px 2px rgba(20,40,30,.05),0 4px 16px rgba(20,40,30,.05);
+  --grey-bg:#ececf1; --grey-ink:#6e6e80; --chip:#ececf1;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);
   --radius:14px;
 }
 [data-theme="dark"]{
-  --bg:#0f1412; --card:#171e1a; --ink:#e8efeb; --ink-2:#9db0a6; --line:#26312b;
-  --brand-soft:#123128; --amber-bg:#3a2d12; --amber-ink:#e8bc66; --red-bg:#3a1d1d; --red-ink:#f09a9a;
-  --grey-bg:#232b27; --grey-ink:#93a29a; --chip:#1f2823;
+  --bg:#131313; --card:#212121; --ink:#ececec; --ink-2:#acacbe; --line:#333333;
+  --brand:#ececec; --brand-ink:#ececec; --brand-soft:#2a2a2a;
+  --amber-bg:#3a2d12; --amber-ink:#e8bc66; --red-bg:#3a1d1d; --red-ink:#f09a9a;
+  --grey-bg:#2a2a2a; --grey-ink:#acacbe; --chip:#2a2a2a;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
@@ -18,15 +22,18 @@ body{margin:0;background:var(--bg);color:var(--ink);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans","Microsoft YaHei",sans-serif;
   -webkit-font-smoothing:antialiased}
 .wrap{max-width:920px;margin:0 auto;padding:0 16px}
-a{color:var(--brand-ink)}
+a{color:var(--ink);text-underline-offset:3px}
+a:hover{color:#000}
+[data-theme="dark"] a:hover{color:#fff}
 button{font:inherit;cursor:pointer}
-:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+::selection{background:var(--ink);color:var(--bg)}
+:focus-visible{outline:2px solid var(--ink-2);outline-offset:2px}
 
 /* header */
 .topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .topbar-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;padding-bottom:12px}
 .brand{display:flex;align-items:center;gap:11px;min-width:0}
-.brand-mark{width:38px;height:38px;border-radius:11px;background:var(--brand);color:#fff;font-weight:800;font-size:20px;display:grid;place-items:center;flex:none}
+.brand-mark{width:38px;height:38px;border-radius:11px;background:var(--ink);color:var(--bg);font-weight:800;font-size:20px;display:grid;place-items:center;flex:none}
 .brand-name{font-weight:700;font-size:17px;line-height:1.2}
 .brand-sub{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top-actions{display:flex;align-items:center;gap:8px;flex:none}
@@ -67,12 +74,13 @@ button{font:inherit;cursor:pointer}
 .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
 .tag{font-size:11px;border-radius:6px;padding:2px 7px;background:var(--grey-bg);color:var(--grey-ink);font-weight:600}
 .tag.pool{background:var(--chip);color:var(--ink-2)}
-.tag.latest{background:var(--brand-soft);color:var(--brand-ink)}
+.tag.latest{background:var(--ink);color:var(--bg)}
 .tag.upcoming{background:var(--amber-bg);color:var(--amber-ink)}
 .tag.gone{background:var(--red-bg);color:var(--red-ink)}
 .tag.repl{background:transparent;border:1px dashed var(--line);color:var(--ink-2)}
-.copy-btn{flex:none;border:1px solid var(--line);background:var(--card);color:var(--brand-ink);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600}
-.copy-btn.copied{background:var(--brand);color:#fff;border-color:var(--brand)}
+.copy-btn{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:7px 12px;font-size:13px;font-weight:600}
+.copy-btn:hover{border-color:var(--ink-2)}
+.copy-btn.copied{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .empty{background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);padding:26px;text-align:center;color:var(--ink-2);margin:14px 0}
 
 /* rules strip */
