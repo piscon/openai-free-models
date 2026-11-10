@@ -1,126 +1,74 @@
 # OpenAI 免费模型速查
 
-OpenAI **数据共享计划**的每日免费 token 名单速查 + 使用指南。点下面的按钮，别人就能在**自己的 Cloudflare 账号**里一键生成同款页面，不需要本地环境、不需要任何 API Key。
+OpenAI **数据共享计划**的每日免费 token 名单速查 + 使用指南。一键部署到你自己的 Cloudflare 账号：不需要本地环境，不需要任何 API Key。
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/piscon/openai-free-models)
 
-> 本项目是第三方整理工具，与 OpenAI 无隶属关系。数据来自 OpenAI 官方页面（见文末来源），最终以官方为准。
+> 第三方整理工具，与 OpenAI 无隶属关系；数据来自 OpenAI 官方页面（见文末来源），以官方为准。
 
-## 页面长什么样
+## 页面功能
 
-- **速查表**：顶部先选你的**组织层级**（Free / Build / Launch / Grow 四档），两个共享额度池的大数字随层级切换（Build 旗舰池 25 万/天 · 小型池 250 万/天；Launch / Grow 100 万 · 1,000 万；Free 不在计划内显示 0），并附「去哪查自己在哪一层」的官方路径；距 UTC 00:00 重置的实时倒计时
-- **5 个任务分组**：通用主力 / 深度推理 / 编程专用 / 视觉与长文 / 轻量高速，共 34 个模型，每个模型一键复制、每组整组复制、支持搜索
-- **状态标记**：最新代模型挂「新锐」；已宣布关停的挂「落幕」并显示关停日期、剩余天数和官方接班人；已关停的单独标记
-- **使用指南**：资格自查、开启步骤、额度规则与坑（同池共享、超额整单计费、工具调用不覆盖、免费额度与 Fast 加速二选一）、按任务选模型、落幕迁移表、FAQ
-- 双主题：浅色为 OpenAI 式黑白中性色，深色参考 Tokyo Night 配色（高对比蓝紫系），手机端适配
+- **速查表**：先选组织层级（Free / Build / Launch / Grow），34 个模型按 5 个任务分组（通用主力 / 深度推理 / 编程专用 / 视觉与长文 / 轻量高速），每个一键复制、整组复制、支持搜索
+- **额度随层级切换**：旗舰池 / 小型池每日免费量（Build 25 万 · 250 万；Launch / Grow 100 万 · 1,000 万；Free 不在计划内为 0），含 UTC 00:00 重置倒计时和「去哪查自己层级」的路径
+- **状态标记**：新锐 / 落幕（关停日期、剩余天数、官方接班人）/ 已关停
+- **使用指南**：资格自查、四层级对照表、开启步骤、规则与坑（同池共享、超额整单计费、工具调用不覆盖、免费与 Fast 加速二选一）、落幕迁移表、FAQ
+- 深浅双主题（浅色 OpenAI 黑白灰 / 深色 Tokyo Night），手机端适配
 
 ## 快速开始
 
-你需要：一个 **Cloudflare 账号**（免费）和一个 **GitHub / GitLab 账号**。不需要本地环境，不需要任何 API Key，全程在浏览器里完成。
+需要：一个 **Cloudflare 账号**（免费）和一个 **GitHub / GitLab 账号**，全程在浏览器里完成。
 
 ### 路线 A：一键部署（推荐，约 2 分钟）
 
-1. 点上方 **Deploy to Cloudflare** 按钮
-2. 登录 Cloudflare，并按提示授权它访问你的 GitHub / GitLab（用于在你账号下建仓库副本）
-3. 确认项目名后点部署，Cloudflare 会自动完成：把本仓库**复制一份到你的账号下** → 按 `wrangler.jsonc` 开通一个 KV 命名空间并把 id 回填进你副本的配置 → 用 Workers Builds 构建并部署 Worker
-4. 等构建部署完成——但先别急着找地址，还有第 5 步
-5. **手动开启访问地址（必做，漏了这步页面打不开）**：进入刚建好的 Worker → *Settings → Domains & Routes* → 找到 **workers.dev** 那一行 → 点 **Enable**。开启后你的地址就是 `https://openai-free-models.<你的子域>.workers.dev`，打开能看到速查页即全部完成。（如果是第一次用这个 Cloudflare 账号，开启前可能先让你定一个 workers.dev 子域名，任填一个即可，只定一次）
+1. 点上方 **Deploy to Cloudflare** 按钮，登录 Cloudflare 并授权它访问你的 GitHub / GitLab
+2. 确认项目名后点部署：Cloudflare 会在你账号下**复制一份仓库**（独立副本，不是 fork），自动开通 KV 并部署 Worker
+3. **必做：开启访问地址** —— 进入 Worker → *Settings → Domains & Routes* → **workers.dev** 一行点 **Enable**（第一次用这个账号可能先让你定一个子域名，任填即可）。地址形如 `https://openai-free-models.<你的子域>.workers.dev`，打开看到速查页即完成
+4. 顺手确认定时任务：Worker → *Settings → Triggers* 里应有一条 `17 3 * * *` 的 Cron（每天 UTC 03:17 自动同步关停数据）
 
-注意第 3 步生成的是**独立副本，不是 GitHub 的 fork** —— 这决定了更新方式不同，见下方「如何更新到新版」，先有个印象即可。还有一个实测确认的细节：副本**不会包含 `.github/workflows/` 里的任何文件**（GitHub 不允许创建副本的应用携带工作流文件），所以自动同步上游的 Action 不会跟着过去，要按「如何更新到新版」的方式一手动放一次模板（约 1 分钟，只此一次）。Worker 自带的定时抓取配置不在此列，会完整复制，不受影响——日常数据更新靠它，不靠仓库同步。
+注：部署生成的副本**不包含 `.github/workflows/` 里的文件**（平台限制，实测确认），所以「自动同步上游」的 Action 需要按下方「如何更新」手动放一次；这不影响 Worker 自带的每日数据同步。
 
-### 路线 B：先 Fork，再手动连接（适合想用 GitHub 同步按钮的人）
+### 路线 B：先 Fork（想用 GitHub 的 Sync fork 更新）
 
-1. 点本仓库右上角 **Fork**，把仓库 fork 到你的账号
-2. 在 fork 里打开 `wrangler.jsonc`：先去 Cloudflare 控制台 *Storage & Databases → KV* 建一个命名空间，把它的 id 填进 `kv_namespaces` 的对象里（连同 `"id": "…"` 一起补上）
-3. Cloudflare 控制台 → *Compute (Workers) → Create → Import a repository*，授权 GitHub 并选中你的 fork，完成导入即自动部署
-4. 这条路线以后更新：在 fork 的仓库页点 **Sync fork → Update branch**，Workers Builds 会自动重新部署
-
-### 部署完成后
-
-- **地址打不开先查这里**：部署成功 ≠ 地址已开启。Worker → *Settings → Domains & Routes* 里 workers.dev 必须是 **Enabled** 状态（开启方法见路线 A 第 5 步），关着的时候地址访问不了
-- **你的副本仓库**在你的 GitHub / GitLab 账号下，名字默认同为 `openai-free-models`；你的 Worker 连着这个副本，副本有新提交就会自动重新部署
-- 想确认定时任务已生效：Cloudflare 控制台 → 你的 Worker → *Settings → Triggers*，能看到一条 `17 3 * * *`（每天 UTC 03:17）的 Cron
-- 关停数据每天自动同步，你什么都不用做；要改抓取时间、名单数据等，见「自定义」
-
-整个运行在 Cloudflare 免费额度内：页面是静态资源（免费不限量），每天只有 1 次定时抓取。
+1. **Fork** 本仓库到你的账号
+2. 在 fork 的 `wrangler.jsonc` 里补 KV id：先去 Cloudflare 控制台 *Storage & Databases → KV* 建一个命名空间，把 id 填进 `kv_namespaces`
+3. 控制台 → *Workers → Create → Import a repository*，选你的 fork 导入部署；同样别忘了按路线 A 第 3 步开启 workers.dev 地址
+4. 以后更新：fork 仓库页点 **Sync fork → Update branch** 即可
 
 ## 部署排错
 
-**构建在最后一步失败，报 `code: 10072` / "reached the Workers Free limit of 5 cron triggers"**
-这是 Cloudflare 免费版的**账号级**上限：整个账号所有 Worker 加起来最多 5 个 Cron 触发器，本项目占 1 个。报错只卡在挂定时任务这一步，**页面本身通常已经部署成功**，先打开你的 workers.dev 地址确认，能打开就只是缺每日自动同步。解决任选其一：
-
-1. **腾一个名额（推荐）**：控制台 → *Workers & Pages*，逐个打开不用的 Worker → *Settings → Triggers*，删掉它的 Cron 触发器；整个不用的测试 Worker 直接删掉更彻底（连触发器一起释放）。然后回到出问题的 Worker → *Settings → Triggers → Add Cron Trigger*，填 `17 3 * * *` 手动挂上，不用重新部署
-2. **不要自动同步**：在你副本的 `wrangler.jsonc` 里删掉 `triggers` 整段再部署，页面退化为纯静态种子数据（关停信息不再每日更新）
-3. 升级 Workers Paid（$5/月）可把上限提到 1,000，为这个项目没必要
-
-注意：每多部署一个测试实例就多占 1 个名额，测完的实例记得删。
+- **地址打不开**：多半是 workers.dev 没开启，见路线 A 第 3 步
+- **构建在最后一步报 `code: 10072`（Cron 触发器达到上限）**：免费版整个账号最多 5 个 Cron 触发器，本项目占 1 个。报错只卡在挂定时任务一步，**页面通常已经部署成功**。处理：删掉不用的 Worker（或删它 *Settings → Triggers* 里的 Cron）腾出名额，再回到本 Worker → *Settings → Triggers* 手动添加 `17 3 * * *`，不用重新部署。测试实例测完记得删
 
 ## 如何更新到新版
 
-上游（本仓库）更新了界面、数据或代码后，你的实例**不会自动跟随**，按下面任一方式更新一次即可。先记住两条：
+你的实例不会自动跟随上游。先记住：**不要再点一次部署按钮**（会新建一整套，不是更新）；更新只换代码，不动 KV 里的数据。
 
-- **不要再点一次部署按钮** —— 那会新建一整套 Worker 和 KV，而不是更新现有的
-- 更新只换代码，**不会动你 KV 里已同步的数据**，也不会改你的域名
+- **方式一（推荐，不用命令行）**：把你副本里 `docs/sync-upstream.yml` 的内容，手动新建为副本的 `.github/workflows/sync-upstream.yml`（副本仓库 → *Add file → Create new file* → 粘贴 → 提交，约 1 分钟，只做这一次）。之后在副本 **Actions** 页运行 **Sync from upstream** 即可同步，它也会每周一自动跑一次；同步时会保留你 `wrangler.jsonc` 里的 KV id，若你改过文件与上游撞车会停下不乱推
+- **方式二（命令行）**：`git remote add upstream https://github.com/piscon/openai-free-models.git` → `git pull upstream main`（注意保留 `wrangler.jsonc` 里的 KV id）→ `git push`
+- 推送后 Workers Builds 自动重新部署，1–2 分钟生效
 
-**方式一：同步 Action（推荐，不用命令行）**
-先说清一个正常现象：你副本的 Actions 页里没有这个工作流、仓库里连 `.github` 目录都没有——不是部署失败，是部署按钮生成的副本一律不带工作流文件（原因见快速开始）。好在模板文件 `docs/sync-upstream.yml` 本身会完整复制进你的副本，你需要做的只是把它**手动放一次，约 1 分钟，只此一次**（工作流文件只能由仓库主人亲自放进去，任何一键工具都代劳不了）：
+## 数据与设计要点
 
-1. 打开**你副本仓库**，点 **Add file → Create new file**
-2. 文件名填 `.github/workflows/sync-upstream.yml`（照这个路径打，目录会自动生成）
-3. 把副本里 [`docs/sync-upstream.yml`](./docs/sync-upstream.yml) 的内容整段复制粘贴进去，点 **Commit changes**
-
-放好之后，之后每次更新只要：
-1. 打开副本的 **Actions** 页 → 选 **Sync from upstream** → **Run workflow**；它也会**每周一自动跑一次**，多数时候你什么都不用点
-2. 它会把你的副本快进到上游最新版并推送，Workers Builds 随即自动重新部署，1–2 分钟后线上生效
-3. 它有个保护：同步时保留你副本的 `wrangler.jsonc`（里面是部署时回填的、属于你的 KV id，被上游覆盖会导致部署坏掉）；如果上游发版说明里明确提到改了 `wrangler.jsonc`，请把新字段手动合并进来、保留你自己的 id
-4. 如果你改过副本里的文件、和上游改动撞车，快进会失败并停下（不会乱推），改用方式二手动合并
-
-**方式二：命令行手动同步**
-```bash
-git clone <你副本的地址> && cd openai-free-models
-git remote add upstream https://github.com/piscon/openai-free-models.git
-git pull upstream main   # 有冲突就按提示解决，注意保留 wrangler.jsonc 里的 KV id
-git push                 # 推送后 Workers Builds 自动重新部署
-```
-
-**方式三：Fork 路线用户**
-在 fork 仓库页点 **Sync fork → Update branch** 即可，Builds 自动重新部署。
-
-## 数据怎么保持新鲜（设计要点）
-
-- **关停信息自动同步**：Worker 带一个 Cron 定时任务（默认每天 UTC 03:17），抓取 [OpenAI 官方下架页](https://developers.openai.com/api/docs/deprecations) 并解析关停日期与接班人，写入 KV。下架通知通常提前 3–6 个月发布，每日一次绰绰有余。
-- **前台没有任何触发抓取的入口** —— 没有刷新按钮、没有刷新接口、没有参数。这是有意为之：站点是公开的，访客可触发的抓取会把免费额度（KV 免费版仅 1,000 次写/天）打光。抓取代码只存在于定时任务入口，并带三道闸：距上次尝试不足 20 小时直接跳过；条件请求（ETag）+ 内容哈希，没变化不写库；解析结果异常（匹配数过低）时放弃本次更新、保留旧数据。
-- **模型名单与额度用种子数据**：名单出自官方帮助文章，但该页对普通程序抓取返回 403，无法可靠机读，所以名单放在 `data/models.json` 里人工核实后更新（页面会显示「核实于」日期）。名单历史上变化很慢；真有变化时改种子文件并重新部署即可，改完记得跑 `npm run seed:sync` 同步前端副本。
+- **关停信息自动同步**：Worker 每天 UTC 03:17 抓取 [OpenAI 官方下架页](https://developers.openai.com/api/docs/deprecations)，解析关停日期与接班人写入 KV；没变化不写库，解析异常就保留旧数据
+- **前台没有任何触发抓取的入口**（无按钮、无接口）：站点是公开的，这样设计是防访客把免费额度刷光，抓取只由定时任务执行
+- **名单与额度用种子数据**：官方帮助文章对程序抓取返回 403，无法自动读取，所以名单放在 `data/models.json` 里人工核实更新，页面标注「核实于」日期
+- 全部运行在 Cloudflare 免费额度内：静态页面不限量，每天只有 1 次定时抓取
 
 ## 自定义
 
-- **改抓取频率/时间**：改 `wrangler.jsonc` 里的 `triggers.crons`（cron 表达式，UTC）
-- **改 Worker 名字**：改 `wrangler.jsonc` 的 `name`（部署前改；已部署的改名等于新建）
-- **改名单数据**：编辑 `data/models.json`（`taskGroups` 五组、`pools` 两池、`verifiedAt` 核实日期），然后 `npm run seed:sync`
-- **关掉自动同步**：删掉 `wrangler.jsonc` 的 `triggers` 段即可，页面退化为纯静态种子数据
-
-## 本地开发
-
-```bash
-npm install
-npm test          # 解析器自带夹具测试
-node test/parse.test.mjs /path/to/deprecations.html   # 用真实下架页全文回归
-npm run dev       # wrangler dev 本地预览
-npm run deploy    # 手动部署（需要你自己的 Cloudflare 账号与 KV id）
-```
-
-手动部署时先建 KV：`npx wrangler kv namespace create MODELS_KV`，把得到的 id 填回 `wrangler.jsonc`。
+- **抓取时间**：改 `wrangler.jsonc` 的 `triggers.crons`；**关掉自动同步**：删掉 `triggers` 整段
+- **改名单数据**：编辑 `data/models.json` 后运行 `npm run seed:sync`
+- **本地开发**：`npm install` → `npm test`（解析器测试）→ `npm run dev`（本地预览）
 
 ## 数据来源
 
-- 免费名单与各层级额度：[OpenAI 帮助文章 · Sharing feedback, evaluation and fine-tuning data…](https://help.openai.com/en/articles/10306912-sharing-feedback-evaluation-and-fine-tuning-data-and-api-inputs-and-outputs-with-openai)（种子核实于 2026-11-10）
-- 层级定义（Free / Build / Launch / Grow 的门槛与月用量上限）：[OpenAI 开发者文档 · Rate limits（Usage tiers）](https://developers.openai.com/api/docs/guides/rate-limits)
+- 免费名单与各层级额度：[OpenAI 帮助文章 · 数据共享计划](https://help.openai.com/en/articles/10306912-sharing-feedback-evaluation-and-fine-tuning-data-and-api-inputs-and-outputs-with-openai)（种子核实于 2026-11-10）
+- 层级定义：[OpenAI 开发者文档 · Rate limits（Usage tiers）](https://developers.openai.com/api/docs/guides/rate-limits)
 - 关停日期与接班人：[OpenAI 官方 Deprecations 页](https://developers.openai.com/api/docs/deprecations)
 
 ## 致谢与交流
 
-- 数据全部来自 OpenAI 官方公开文档（帮助文章与开发者文档），感谢官方把规则写明白
-- 感谢 [LINUX DO](https://linux.do) 社区的佬们 —— 有问题、建议或想交流用法的，欢迎到 [LINUX DO](https://linux.do) 找我，或者直接在本仓库提 Issue
+数据全部来自 OpenAI 官方公开文档，感谢官方把规则写明白；也感谢 [LINUX DO](https://linux.do) 社区的佬们——有问题、建议或想交流，欢迎到 [LINUX DO](https://linux.do) 找我，或者直接在本仓库提 Issue。
 
 ## License
 
