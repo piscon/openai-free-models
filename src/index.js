@@ -10,7 +10,9 @@
 //      (Workers KV free tier allows only 1,000 writes/day).
 //   3. Once a day, the Cron Trigger (see wrangler.jsonc, 03:17 UTC) runs
 //      the scheduled() handler below, which re-reads OpenAI's official
-//      Deprecations page and updates shutdown dates / replacements in KV.
+//      Deprecations page (shutdown dates / replacements) and the Rate
+//      limits guide's Usage tiers table (tier thresholds / monthly caps),
+//      updating both in KV.
 //      Safeguards: a 20-hour minimum gap between attempts, ETag
 //      conditional requests, a content hash so unchanged pages cost no
 //      KV write, and a sanity check that aborts the update if parsing
@@ -24,9 +26,10 @@
 // seed was last verified against the official article).
 
 import seedData from '../data/models.json';
-import { parseDeprecations, mergeShutdowns, fnv1a } from './parse.js';
+import { parseDeprecations, mergeShutdowns, parseUsageTiers, mergeTiers, fnv1a } from './parse.js';
 
 const DEPRECATIONS_URL = 'https://developers.openai.com/api/docs/deprecations';
+const RATE_LIMITS_URL = seedData.sources.tiers || 'https://developers.openai.com/api/docs/guides/rate-limits';
 const HELP_URL = seedData.sources.program;
 const DATA_KEY = 'models:v1';
 const META_KEY = 'meta:v1';
@@ -97,6 +100,15 @@ async function refresh(env) {
   if (meta.lastAttempt && now - meta.lastAttempt < MIN_GAP_MS) return; // self-guard
   meta = { ...meta, lastAttempt: now };
 
+  const storedData = await kv.get(DATA_KEY, 'json');
+  let base = null; // dataset to persist if anything changed
+  let changed = false;
+  const startFrom = () =>
+    base ??
+    (storedData && Array.isArray(storedData.taskGroups)
+      ? JSON.parse(JSON.stringify(storedData))
+      : JSON.parse(JSON.stringify(seedData)));
+
   // 1) Deprecations page: plain fetch works (verified), fully parseable.
   try {
     const headers = {};
@@ -113,12 +125,8 @@ async function refresh(env) {
         // structure has changed — keep the old data instead of wiping
         // every shutdown badge.
         if (depMap.size >= 20 && matched >= 10) {
-          const { data } = mergeShutdowns(seedData, depMap);
-          data.runtime = {
-            deprecationsCheckedAt: new Date(now).toISOString(),
-            helpArticleStatus: meta.runtime?.helpArticleStatus ?? 'seed-only',
-          };
-          await kv.put(DATA_KEY, JSON.stringify(data));
+          base = mergeShutdowns(seedData, depMap).data;
+          changed = true;
           meta.deprecationsHash = hash;
           meta.deprecationsEtag = res.headers.get('etag');
           meta.lastSuccess = now;
@@ -132,6 +140,36 @@ async function refresh(env) {
     // Keep previous data; try again at the next scheduled run.
   }
 
+  // 2) Usage tiers: the Rate limits guide publishes the tier table
+  // (thresholds and monthly caps) and is fetchable the same way. Only
+  // those facts are refreshed; the complimentary quotas per tier are
+  // program parameters stated in the help article and stay with the seed.
+  try {
+    const headers = {};
+    if (meta.tiersEtag) headers['if-none-match'] = meta.tiersEtag;
+    const res = await fetch(RATE_LIMITS_URL, { headers, cf: { cacheTtl: 0 } });
+    if (res.status === 200) {
+      const html = await res.text();
+      const hash = fnv1a(html);
+      if (hash !== meta.tiersHash) {
+        const tierMap = parseUsageTiers(html);
+        if (tierMap.size >= 3) {
+          const merged = mergeTiers(startFrom(), tierMap);
+          if (merged.updated >= 3) {
+            base = merged.data;
+            changed = true;
+            meta.tiersHash = hash;
+            meta.tiersEtag = res.headers.get('etag');
+            meta.tiersCheckedAt = now;
+            meta.tiersUpdated = merged.updated;
+          }
+        }
+      }
+    }
+  } catch {
+    // Keep previous tier facts; try again at the next scheduled run.
+  }
+
   // 2) The help article: probed only. It currently answers 403 to plain
   // fetches; the status is recorded so the site can show honestly whether
   // the seed list could be machine-checked. The model list itself is
@@ -143,16 +181,18 @@ async function refresh(env) {
     meta.helpArticleStatus = 'unreachable';
   }
 
-  const stored = await kv.get(DATA_KEY, 'json');
-  if (stored) {
-    stored.runtime = {
-      deprecationsCheckedAt: meta.lastSuccess
-        ? new Date(meta.lastSuccess).toISOString()
-        : null,
-      helpArticleStatus: meta.helpArticleStatus ?? 'seed-only',
-    };
-    // Only the small runtime block changed; keep the dataset in sync.
-    meta.runtime = stored.runtime;
+  const runtime = {
+    deprecationsCheckedAt: meta.lastSuccess
+      ? new Date(meta.lastSuccess).toISOString()
+      : null,
+    helpArticleStatus: meta.helpArticleStatus ?? 'seed-only',
+  };
+  if (changed && base) {
+    base.runtime = runtime;
+    await kv.put(DATA_KEY, JSON.stringify(base));
   }
+  // currentData() overlays meta.runtime at read time, so the runtime
+  // block stays current even when the dataset itself did not change.
+  meta.runtime = runtime;
   await kv.put(META_KEY, JSON.stringify(meta));
 }

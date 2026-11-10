@@ -111,6 +111,63 @@ export function mergeShutdowns(seedData, depMap) {
   return { data, matched };
 }
 
+// Parse the Usage tiers table from OpenAI's official Rate limits guide
+// (developers.openai.com/api/docs/guides/rate-limits). The table rows are:
+//   | Free   | User must be in an allowed geography | $100 / month |
+//   | Build  | $5 in total credit purchases         | $500 / month |
+//   | Launch | $100 in total credit purchases       | $5,000 / month |
+//   | Grow   | $500 in total credit purchases       | $200,000 / month |
+// Only the facts are extracted (tier name, cumulative-purchase threshold,
+// monthly usage cap); display wording is derived from them by the caller.
+// Returns a Map: tierName -> { purchaseUsd, monthlyCapUsd }
+const TIER_NAMES = ['Free', 'Build', 'Launch', 'Grow'];
+export function parseUsageTiers(html) {
+  const map = new Map();
+  if (!html || typeof html !== 'string') return map;
+  const rowRe = /<tr>([\s\S]*?)<\/tr>/g;
+  let row;
+  while ((row = rowRe.exec(html)) !== null) {
+    const cells = [];
+    const tdRe = /<td[^>]*>([\s\S]*?)<\/td>/g;
+    let td;
+    while ((td = tdRe.exec(row[1])) !== null) cells.push(stripTags(td[1]));
+    if (cells.length < 3) continue;
+    const name = cells[0];
+    if (!TIER_NAMES.includes(name) || map.has(name)) continue;
+    // Disambiguate from the per-model rate-limit tables further down the
+    // page (their rows also start with a tier name): the usage-tiers table
+    // is the one whose qualification mentions credit purchases / geography
+    // and whose limit is a dollar amount.
+    if (!/credit purchases|allowed geography/i.test(cells[1])) continue;
+    const cap = cells[2].match(/\$\s*([\d,]+)/);
+    if (!cap) continue;
+    const buy = cells[1].match(/\$\s*([\d,]+)/);
+    map.set(name, {
+      purchaseUsd: buy ? parseInt(buy[1].replace(/,/g, ''), 10) : 0,
+      monthlyCapUsd: parseInt(cap[1].replace(/,/g, ''), 10),
+    });
+  }
+  return map;
+}
+
+// Refresh the tier facts (purchase threshold / monthly cap) in a dataset
+// from a parsed usage-tiers map. Complimentary quotas and eligibility are
+// program parameters stated only in the help article, so they stay with
+// the seed; only the doc-published facts are overwritten here.
+export function mergeTiers(dataObj, tierMap) {
+  const data = JSON.parse(JSON.stringify(dataObj));
+  let updated = 0;
+  for (const tier of data.tiers || []) {
+    const hit = tierMap.get(tier.name);
+    if (hit) {
+      tier.purchaseUsd = hit.purchaseUsd;
+      tier.monthlyCapUsd = hit.monthlyCapUsd;
+      updated += 1;
+    }
+  }
+  return { data, updated };
+}
+
 // Small, fast, non-cryptographic hash used only for change detection.
 export function fnv1a(str) {
   let h = 0x811c9dc5;

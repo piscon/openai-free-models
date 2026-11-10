@@ -5,7 +5,7 @@
 // Usage:  node test/parse.test.mjs [path-to-deprecations.html]
 // Without a file argument, a small built-in fixture is used instead.
 import { readFileSync } from 'node:fs';
-import { parseDeprecations, mergeShutdowns } from '../src/parse.js';
+import { parseDeprecations, mergeShutdowns, parseUsageTiers, mergeTiers } from '../src/parse.js';
 
 const seed = JSON.parse(readFileSync(new URL('../data/models.json', import.meta.url), 'utf8'));
 
@@ -57,6 +57,40 @@ if (process.argv[2]) {
 } else {
   check(merged['gpt-5-2025-08-07'].shutdownDate === '2026-12-11', 'fixture: gpt-5 date');
   check(merged['gpt-4o-2024-08-06'].replacement === 'gpt-6-luna', 'fixture: 4o replacement');
+}
+
+// --- usage tiers: fixture + optional live regression ---
+const tiersFixture = `<table><tr><th>Tier</th><th>Qualification</th><th>Usage limits</th></tr>
+<tr><td>Free</td><td>User must be in an <a href="#">allowed geography</a></td><td>$100 / month</td></tr>
+<tr><td>Build</td><td>$5 in total credit purchases</td><td>$500 / month</td></tr>
+<tr><td>Launch</td><td>$100 in total credit purchases</td><td>$5,000 / month</td></tr>
+<tr><td>Grow</td><td>$500 in total credit purchases</td><td>$200,000 / month</td></tr></table>
+<table><tr><td>Build</td><td>Astra, Sol, Terra</td><td>5,000</td><td>1,000,000</td></tr></table>`;
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const tm = parseUsageTiers(tiersFixture);
+check(tm.size === 4, 'tiers fixture: 4 tiers parsed');
+check(eq(tm.get('Free'), { purchaseUsd: 0, monthlyCapUsd: 100 }), 'tiers fixture: Free facts');
+check(eq(tm.get('Build'), { purchaseUsd: 5, monthlyCapUsd: 500 }), 'tiers fixture: Build facts');
+check(eq(tm.get('Launch'), { purchaseUsd: 100, monthlyCapUsd: 5000 }), 'tiers fixture: Launch facts');
+check(eq(tm.get('Grow'), { purchaseUsd: 500, monthlyCapUsd: 200000 }), 'tiers fixture: Grow facts');
+const mergedT = mergeTiers(seed, tm);
+check(mergedT.updated === 4, 'tiers merge: 4 updated');
+check(mergedT.data.tiers.find((x) => x.key === 'grow').monthlyCapUsd === 200000, 'tiers merge: Grow cap applied');
+// seed v2 shape: four tiers with scraped-fact fields + complimentary quotas
+check(seed.version === 2, 'seed version 2');
+check(eq(seed.tiers.map((x) => x.key), ['free', 'build', 'launch', 'grow']), 'seed tiers order');
+const sq = Object.fromEntries(seed.tiers.map((x) => [x.key, x.quotas]));
+check(eq(sq.free, { large: 0, small: 0 }), 'seed quotas: Free 0');
+check(eq(sq.build, { large: 250000, small: 2500000 }), 'seed quotas: Build');
+check(eq(sq.launch, { large: 1000000, small: 10000000 }), 'seed quotas: Launch');
+check(eq(sq.grow, { large: 1000000, small: 10000000 }), 'seed quotas: Grow');
+check(seed.tiers.find((x) => x.key === 'free').eligible === false, 'seed Free not eligible');
+check(eq(seed.tiers.map((x) => [x.purchaseUsd, x.monthlyCapUsd]), [[0, 100], [5, 500], [100, 5000], [500, 200000]]), 'seed tier facts match official guide');
+if (process.argv[3]) {
+  const live = parseUsageTiers(readFileSync(process.argv[3], 'utf8'));
+  check(live.size === 4, 'tiers live: 4 tiers parsed');
+  check(eq(live.get('Build'), { purchaseUsd: 5, monthlyCapUsd: 500 }), 'tiers live: Build facts');
+  check(eq(live.get('Grow'), { purchaseUsd: 500, monthlyCapUsd: 200000 }), 'tiers live: Grow facts');
 }
 
 console.log(failures === 0 ? '\nALL TESTS PASSED' : `\n${failures} FAILURE(S)`);

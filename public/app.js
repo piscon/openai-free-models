@@ -4,6 +4,7 @@
    前端没有任何触发官方抓取的能力，抓取只发生在 Worker 的定时任务里。 */
 
 const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
 const state = { data: null, filter: 'all', query: '', tier: localStorage.getItem('ofm-tier') || 'build' };
 
 function esc(s) {
@@ -78,10 +79,24 @@ function tiersOf(data) {
   ];
 }
 
+// Display strings for a tier, derived from the scraped facts
+// (purchaseUsd / monthlyCapUsd) when present; older datasets that still
+// carry qualification / monthlyLimit strings use those instead.
+function tierFacts(t) {
+  const usd = (n) => '$' + Number(n).toLocaleString('en-US');
+  return {
+    qualification: t.purchaseUsd != null
+      ? (t.purchaseUsd === 0 ? '所在地区受支持即可，无需付费' : `累计购买额度满 ${usd(t.purchaseUsd)}`)
+      : (t.qualification || ''),
+    monthlyLimit: t.monthlyCapUsd != null ? `${usd(t.monthlyCapUsd)} / 月` : (t.monthlyLimit || ''),
+  };
+}
+
 function renderQuota(data) {
   const tiers = tiersOf(data);
   if (!tiers.some((t) => t.key === state.tier)) state.tier = 'build';
   const tier = tiers.find((t) => t.key === state.tier);
+  const facts = tierFacts(tier);
 
   $('#tierChips').innerHTML = tiers.map((t) =>
     `<button class="chip${t.key === state.tier ? ' is-active' : ''}" data-tier="${esc(t.key)}" type="button">${esc(t.name)}</button>`).join('');
@@ -91,8 +106,8 @@ function renderQuota(data) {
     renderQuota(state.data);
   }));
   $('#tierNote').textContent = tier.eligible
-    ? `${tier.name}：${tier.qualification} · 月用量上限 ${tier.monthlyLimit}`
-    : `${tier.name}：${tier.qualification} · 月用量上限 ${tier.monthlyLimit} · 不在此计划内`;
+    ? `${tier.name}：${facts.qualification} · 月用量上限 ${facts.monthlyLimit}`
+    : `${tier.name}：${facts.qualification} · 月用量上限 ${facts.monthlyLimit} · 不在此计划内`;
 
   const cards = data.pools.map((p) => {
     const q = tier.quotas[p.key] ?? 0;
