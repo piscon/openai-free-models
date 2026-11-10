@@ -5,6 +5,10 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "openai-free-models",
   "main": "src/index.js",
+  // Serve on the workers.dev subdomain. Note: the Deploy-button flow
+  // may still leave the workers.dev route disabled — enable it once in
+  // the dashboard (Worker → Settings → Domains & Routes), see README.
+  "workers_dev": true,
   "compatibility_date": "2025-08-01",
   "assets": {
     "directory": "./public",

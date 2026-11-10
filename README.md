@@ -23,7 +23,8 @@ OpenAI **数据共享计划**的每日免费 token 名单速查 + 使用指南�
 1. 点上方 **Deploy to Cloudflare** 按钮
 2. 登录 Cloudflare，并按提示授权它访问你的 GitHub / GitLab（用于在你账号下建仓库副本）
 3. 确认项目名后点部署，Cloudflare 会自动完成：把本仓库**复制一份到你的账号下** → 按 `wrangler.jsonc` 开通一个 KV 命名空间并把 id 回填进你副本的配置 → 用 Workers Builds 构建并部署 Worker
-4. 完成后你会得到一个 `https://openai-free-models.<你的子域>.workers.dev` 地址，打开即用
+4. 等构建部署完成——但先别急着找地址，还有第 5 步
+5. **手动开启访问地址（必做，漏了这步页面打不开）**：进入刚建好的 Worker → *Settings → Domains & Routes* → 找到 **workers.dev** 那一行 → 点 **Enable**。开启后你的地址就是 `https://openai-free-models.<你的子域>.workers.dev`，打开能看到速查页即全部完成。（如果是第一次用这个 Cloudflare 账号，开启前可能先让你定一个 workers.dev 子域名，任填一个即可，只定一次）
 
 注意第 3 步生成的是**独立副本，不是 GitHub 的 fork** —— 这决定了更新方式不同，见下方「如何更新到新版」，先有个印象即可。还有一个实测确认的细节：副本**不会包含 `.github/workflows/` 里的任何文件**（GitHub 不允许创建副本的应用携带工作流文件），所以自动同步上游的 Action 不会跟着过去，要按「如何更新到新版」的方式一手动放一次模板（约 1 分钟，只此一次）。Worker 自带的定时抓取配置不在此列，会完整复制，不受影响——日常数据更新靠它，不靠仓库同步。
 
@@ -36,6 +37,7 @@ OpenAI **数据共享计划**的每日免费 token 名单速查 + 使用指南�
 
 ### 部署完成后
 
+- **地址打不开先查这里**：部署成功 ≠ 地址已开启。Worker → *Settings → Domains & Routes* 里 workers.dev 必须是 **Enabled** 状态（开启方法见路线 A 第 5 步），关着的时候地址访问不了
 - **你的副本仓库**在你的 GitHub / GitLab 账号下，名字默认同为 `openai-free-models`；你的 Worker 连着这个副本，副本有新提交就会自动重新部署
 - 想确认定时任务已生效：Cloudflare 控制台 → 你的 Worker → *Settings → Triggers*，能看到一条 `17 3 * * *`（每天 UTC 03:17）的 Cron
 - 关停数据每天自动同步，你什么都不用做；要改抓取时间、名单数据等，见「自定义」
