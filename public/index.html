@@ -62,7 +62,7 @@
       <div class="rule"><strong>同池共享</strong><span>同一池里所有模型共用一份额度，不是每个模型一份</span></div>
       <div class="rule"><strong>超额整单计费</strong><span>单次请求一旦让当日总量越线，整条请求按原价收费</span></div>
       <div class="rule"><strong>UTC 00:00 重置</strong><span>每天世界时 00:00（北京 08:00 / 东京 09:00）清零</span></div>
-      <div class="rule"><strong>有前提</strong><span>账户需有正余额；微调模型、评测与工具调用不计入免费额度</span></div>
+      <div class="rule"><strong>有前提</strong><span>账户需有正余额；工具调用不免费；免费额度与 Fast 加速二选一</span></div>
     </div>
   </section>
 
@@ -106,7 +106,9 @@
         <li><strong>两个池子，各一份，按层级给量。</strong>旗舰池：Build 每天 25 万 token，Launch / Grow 每天 100 万；小型池：Build 每天 250 万，Launch / Grow 每天 1,000 万；Free 为 0。池内所有模型共享这一份。速查页顶部选好你的层级，数字就是你那份。</li>
         <li><strong>越线整单收费。</strong>系统按当日累计判断：某次请求会让总量超过额度时，这整条请求按原价计费，不是只有超出的部分收费。</li>
         <li><strong>每天 UTC 00:00 重置</strong>（北京 08:00 / 东京 09:00），不累计、不结转。</li>
-        <li><strong>不计入的部分：</strong>微调模型、微调训练、Evals 评测、工具调用（如联网搜索）都不走免费额度。</li>
+        <li><strong>不计入的部分：</strong>微调模型、微调训练、Evals 评测都不走免费额度。</li>
+        <li><strong>工具调用不免费（不是禁用，是不覆盖）：</strong>函数调用、联网搜索、文件搜索、代码解释器、Computer Use 等都属于官方说的 tool use，不在计划内。带工具的请求照常能跑，但按正常价格计费；联网搜索这类官方工具还另有按次费用。想白嫖，就别给请求挂工具。</li>
+        <li><strong>免费额度不能加速：</strong>免费 token 走的是一个独立处理层级（用量页里叫 <em>data sharing incentive tier</em>）。降低延迟要用 Fast 模式（请求参数 <code>service_tier: "fast"</code>，原 Priority 处理），而 Fast 模式是按溢价单独计费的——一个请求只能按一个层级处理，所以<strong>免费与加速二选一</strong>：设了 fast 的请求按 Fast 费率收费，不消耗免费额度。</li>
         <li><strong>计划可终止：</strong>OpenAI 承诺终止前提前 30 天通知。</li>
       </ul>
 
@@ -137,7 +139,9 @@
         <dt>额度是每个模型一份吗？</dt>
         <dd>不是。同一个池里的模型共用一份，旗舰池一天总共就 100 万 token。</dd>
         <dt>用了工具调用（联网搜索等）还免费吗？</dt>
-        <dd>工具调用不计入这个计划，相关请求按正常价格收费。</dd>
+        <dd>不免费。工具调用不在计划内：工具本身能正常用，但带工具的请求按正常价格收费，联网搜索等官方工具还另有按次费用。</dd>
+        <dt>想响应快点，能开 Fast 模式（service_tier: "fast"）又用免费额度吗？</dt>
+        <dd>不能同时。免费 token 走 data sharing incentive tier 层级，Fast 模式是溢价计费的处理层级，二选一：开了 fast 就按 Fast 费率收费，不再走免费额度。</dd>
       </dl>
 
       <h2>数据来源与免责</h2>
