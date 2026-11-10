@@ -117,6 +117,11 @@ npm run deploy    # 手动部署（需要你自己的 Cloudflare 账号与 KV id
 - 层级定义（Free / Build / Launch / Grow 的门槛与月用量上限）：[OpenAI 开发者文档 · Rate limits（Usage tiers）](https://developers.openai.com/api/docs/guides/rate-limits)
 - 关停日期与接班人：[OpenAI 官方 Deprecations 页](https://developers.openai.com/api/docs/deprecations)
 
+## 致谢与交流
+
+- 数据全部来自 OpenAI 官方公开文档（帮助文章与开发者文档），感谢官方把规则写明白
+- 感谢 [LINUX DO](https://linux.do) 社区的佬们 —— 有问题、建议或想交流用法的，欢迎到 [LINUX DO](https://linux.do) 找我，或者直接在本仓库提 Issue
+
 ## License
 
 代码 MIT（见 [LICENSE](./LICENSE)）。页面中的模型数据为对 OpenAI 官方公开信息的整理。
